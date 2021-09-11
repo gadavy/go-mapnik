@@ -8,6 +8,7 @@ package mapnik
 import "C"
 import (
 	"errors"
+	"fmt"
 	"io/fs"
 	"io/ioutil"
 	"log"
@@ -15,6 +16,8 @@ import (
 	"strings"
 	"unsafe"
 )
+
+var ErrMapnikError = errors.New("mapnik")
 
 type LogLevel int
 
@@ -66,17 +69,27 @@ func RegisterDatasources(path string) error {
 	}
 
 	for _, file := range fileInfos {
-		cs := C.CString(filepath.Join(path, file.Name()))
-		defer C.free(unsafe.Pointer(cs))
-
-		if C.mapnik_register_datasource(cs) == 0 {
-			e := C.GoString(C.mapnik_register_last_error())
-			if e != "" {
-				return errors.New("registering datasources: " + e)
-			}
-
-			return errors.New("error while registering datasources")
+		if err := registerDatasource(filepath.Join(path, file.Name())); err != nil {
+			return fmt.Errorf("%w: %s", file.Name(), err)
 		}
+	}
+
+	return nil
+}
+
+func registerDatasource(path string) error {
+	cs := C.CString(path)
+	defer C.free(unsafe.Pointer(cs))
+
+	ce := C.CString("")
+	defer C.free(unsafe.Pointer(ce))
+
+	if C.mapnik_register_datasource(cs, &ce) != 0 {
+		if e := C.GoString(ce); e != "" {
+			return fmt.Errorf("%w: registering datasource: %s", ErrMapnikError, e)
+		}
+
+		return fmt.Errorf("%w: registering datasource", ErrMapnikError)
 	}
 
 	return nil
@@ -99,11 +112,11 @@ func RegisterFonts(path string) error {
 		defer C.free(unsafe.Pointer(ce))
 
 		if C.mapnik_register_font(cs, &ce) != 0 {
-			if ce != "" {
-				return errors.New("registering fonts: " + ce)
+			if e := C.GoString(ce); e != "" {
+				return fmt.Errorf("%w: registering font: %s", ErrMapnikError, e)
 			}
 
-			return errors.New("error while registering fonts")
+			return fmt.Errorf("%w: registering font", ErrMapnikError)
 		}
 
 		log.Printf("[mapnik] font %s registered", info.Name())
@@ -134,7 +147,7 @@ func NewMap(width, height uint32) *Map {
 }
 
 func (m *Map) lastError() error {
-	return errors.New("mapnik: " + C.GoString(C.mapnik_map_last_error(m.m)))
+	return fmt.Errorf("%w: map error: %s", ErrMapnikError, C.GoString(C.mapnik_map_last_error(m.m)))
 }
 
 // Load initializes the map by loading its stylesheet from stylesheetFile

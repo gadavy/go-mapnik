@@ -1,5 +1,13 @@
 # go-mapnik
 
+Import
+------------
+
+```shell
+CGO_ENABLED="0" go get gitlab.ozon.ru/osm/go-mapnik
+```
+
+
 Installation
 ------------
 

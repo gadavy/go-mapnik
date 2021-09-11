@@ -25,27 +25,6 @@ extern "C"
 {
 #endif
 
-    static std::string *register_err;
-
-    inline void mapnik_register_reset_last_error()
-    {
-        if (register_err)
-        {
-            delete register_err;
-            register_err = NULL;
-        }
-    }
-
-    const char *mapnik_register_last_error()
-    {
-        if (register_err)
-        {
-            return register_err->c_str();
-        }
-
-        return NULL;
-    }
-
     int mapnik_register_font(const char *path, char **err)
     {
         try
