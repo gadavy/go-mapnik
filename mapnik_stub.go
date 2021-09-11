@@ -3,26 +3,6 @@
 
 package mapnik
 
-type LogLevel int
-
-const (
-	LogLevelNone  LogLevel = 0
-	LogLevelDebug LogLevel = 1
-	LogLevelWarn  LogLevel = 2
-	LogLevelError LogLevel = 3
-)
-
-type ImageFormat string
-
-const (
-	Png256 ImageFormat = "png256"
-	Jpeg80 ImageFormat = "jpeg80"
-)
-
-func (f ImageFormat) String() string {
-	return string(f)
-}
-
 func Version() string {
 	return "Mapnik disabled"
 }
@@ -42,6 +22,8 @@ type Map struct{}
 func NewMap(width, height uint32) *Map {
 	return &Map{}
 }
+
+func (m *Map) SetMaxConnections(count int) {}
 
 // Load initializes the map by loading its stylesheet from stylesheetFile
 func (m *Map) Load(stylesheetFile string) error {
@@ -75,12 +57,6 @@ func (m *Map) RenderToFile(path string) error {
 }
 
 func (m *Map) SetBufferSize(s int) {}
-
-type RenderOpts struct {
-	Scale       float64
-	ScaleFactor float64
-	Format      ImageFormat // Format for the image ('jpeg80', 'png256', etc.)
-}
 
 // Render returns the map as an encoded image.
 func (m *Map) Render(opts RenderOpts) ([]byte, error) {

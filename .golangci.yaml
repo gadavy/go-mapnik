@@ -1,0 +1,38 @@
+# More info on config here: https://golangci-lint.run/usage/configuration/#config-file
+run:
+  timeout: 10s
+  issues-exit-code: 1
+  tests: false
+  skip-dirs:
+    - test
+
+linters:
+  enable-all: true
+  disable:
+    - exhaustivestruct
+    - tagliatelle
+    - godox
+    - wsl # плохо воспринимает cgo.
+    - nlreturn # плохо воспринимает cgo.
+  fast: false
+
+linters-settings:
+  gocritic:
+    enabled-tags:
+      - style
+      - experimental
+      - performance
+      - diagnostic
+      - opinionated
+
+  govet:
+    enable-all: true
+    disable:
+      - shadow
+      - fieldalignment
+
+  gci:
+    local-prefixes: github.com/gadavy/go-mapnik
+
+  funlen:
+    lines: 80

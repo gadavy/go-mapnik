@@ -5,39 +5,15 @@ package mapnik
 
 // #include <stdlib.h>
 // #include "mapnik_c_api.h"
-import "C"
+import "C" // nolint:gocritic // cgo
 import (
-	"errors"
 	"fmt"
 	"io/fs"
 	"io/ioutil"
-	"log"
 	"path/filepath"
 	"strings"
-	"unsafe"
+	"unsafe" // nolint:gocritic // cgo
 )
-
-var ErrMapnikError = errors.New("mapnik")
-
-type LogLevel int
-
-const (
-	LogLevelNone  LogLevel = 0
-	LogLevelDebug LogLevel = 1
-	LogLevelWarn  LogLevel = 2
-	LogLevelError LogLevel = 3
-)
-
-type ImageFormat string
-
-const (
-	Png256 ImageFormat = "png256"
-	Jpeg80 ImageFormat = "jpeg80"
-)
-
-func (f ImageFormat) String() string {
-	return string(f)
-}
 
 func Version() string {
 	return "Mapnik " + C.GoString(C.mapnik_version_string())
@@ -59,18 +35,18 @@ func SetLogLevel(level LogLevel) {
 		ll = C.MAPNIK_WARN
 	}
 
-	C.mapnik_logging_set_severity(C.int(ll))
+	C.mapnik_logging_set_severity(ll)
 }
 
 func RegisterDatasources(path string) error {
 	fileInfos, err := ioutil.ReadDir(path)
 	if err != nil {
-		return err
+		return fmt.Errorf("read dir: %w", err)
 	}
 
 	for _, file := range fileInfos {
 		if err := registerDatasource(filepath.Join(path, file.Name())); err != nil {
-			return fmt.Errorf("%w: %s", file.Name(), err)
+			return fmt.Errorf("%s: %w", file.Name(), err)
 		}
 	}
 
@@ -84,9 +60,9 @@ func registerDatasource(path string) error {
 	ce := C.CString("")
 	defer C.free(unsafe.Pointer(ce))
 
-	if C.mapnik_register_datasource(cs, &ce) != 0 {
+	if C.mapnik_register_datasource(cs, &ce) != 0 { // nolint:gocritic // not identical
 		if e := C.GoString(ce); e != "" {
-			return fmt.Errorf("%w: registering datasource: %s", ErrMapnikError, e)
+			return fmt.Errorf("%w: registering datasource: %v", ErrMapnikError, e)
 		}
 
 		return fmt.Errorf("%w: registering datasource", ErrMapnikError)
@@ -111,7 +87,7 @@ func RegisterFonts(path string) error {
 		ce := C.CString("")
 		defer C.free(unsafe.Pointer(ce))
 
-		if C.mapnik_register_font(cs, &ce) != 0 {
+		if C.mapnik_register_font(cs, &ce) != 0 { // nolint:gocritic // not identical
 			if e := C.GoString(ce); e != "" {
 				return fmt.Errorf("%w: registering font: %s", ErrMapnikError, e)
 			}
@@ -119,12 +95,14 @@ func RegisterFonts(path string) error {
 			return fmt.Errorf("%w: registering font", ErrMapnikError)
 		}
 
-		log.Printf("[mapnik] font %s registered", info.Name())
-
 		return nil
 	}
 
-	return filepath.Walk(path, walk)
+	if err := filepath.Walk(path, walk); err != nil {
+		return fmt.Errorf("walk: %w", err)
+	}
+
+	return nil
 }
 
 func isFontFile(path string) bool {
@@ -234,12 +212,6 @@ func (m *Map) SetBufferSize(s int) {
 	C.mapnik_map_set_buffer_size(m.m, C.int(s))
 }
 
-type RenderOpts struct {
-	Scale       float64
-	ScaleFactor float64
-	Format      ImageFormat // Format for the image ('jpeg80', 'png256', etc.)
-}
-
 // Render returns the map as an encoded image.
 func (m *Map) Render(opts RenderOpts) ([]byte, error) {
 	scaleFactor := opts.ScaleFactor
@@ -270,7 +242,7 @@ func (m *Map) Render(opts RenderOpts) ([]byte, error) {
 
 	b := C.mapnik_image_to_blob(i, format)
 	if b == nil {
-		return nil, errors.New("mapnik: " + C.GoString(C.mapnik_image_last_error(i)))
+		return nil, fmt.Errorf("%w: %v", ErrMapnikError, C.GoString(C.mapnik_image_last_error(i)))
 	}
 
 	C.free(unsafe.Pointer(format))

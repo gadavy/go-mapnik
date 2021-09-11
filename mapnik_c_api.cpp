@@ -48,7 +48,7 @@ extern "C"
         try
         {
 #if MAPNIK_VERSION >= 200200
-            mapnik::datasource_cache::instance().register_datasources(path);
+        mapnik::datasource_cache::instance().register_datasources(path);
 #else
         mapnik::datasource_cache::instance()->register_datasources(path);
 #endif
@@ -109,7 +109,7 @@ extern "C"
 #if MAPNIK_VERSION >= 300000
             mapnik::layer &l = m->m->get_layer(i);
 #else
-        mapnik::layer &l = m->m->getLayer(i);
+            mapnik::layer &l = m->m->getLayer(i);
 #endif
             mapnik::parameters params = l.datasource()->params();
 
@@ -120,7 +120,7 @@ extern "C"
             }
 
 #if MAPNIK_VERSION >= 200200
-            l.set_datasource(mapnik::datasource_cache::instance().create(params));
+        l.set_datasource(mapnik::datasource_cache::instance().create(params));
 #else
         l.set_datasource(mapnik::datasource_cache::instance()->create(params));
 #endif
@@ -469,7 +469,7 @@ extern "C"
         return MAPNIK_VERSION_STRING;
 #else
 #define MAPNIK_C_API_STRINGIFY(n) #n
-    return "ABI " MAPNIK_C_API_STRINGIFY(MAPNIK_VERSION);
+        return "ABI " MAPNIK_C_API_STRINGIFY(MAPNIK_VERSION);
 #endif
     }
 

@@ -1,0 +1,17 @@
+version: "3"
+services:
+  test:
+    build:
+      context: .
+      dockerfile: test/Dockerfile
+    working_dir: /src/
+    volumes:
+      - ./:/src
+      - go-mod-cache:/go/pkg
+      - go-build-cache:/root/.cache/go-build
+
+volumes:
+  go-build-cache:
+    external: true
+  go-mod-cache:
+    external: true
