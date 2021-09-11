@@ -1,5 +1,7 @@
 #include <mapnik/version.hpp>
 #include <mapnik/map.hpp>
+#include <mapnik/layer.hpp>
+#include <mapnik/datasource.hpp>
 #include <mapnik/color.hpp>
 #include <mapnik/image_util.hpp>
 #include <mapnik/agg_renderer.hpp>
@@ -95,6 +97,36 @@ extern "C"
             delete m->err;
             m->err = NULL;
         }
+    }
+
+    void mapnik_map_set_max_connections(mapnik_map_t *m, int num_threads)
+    {
+        unsigned int i;
+        char *tmp = (char *)malloc(20);
+
+        for (i = 0; i < m->m->layer_count(); i++)
+        {
+#if MAPNIK_VERSION >= 300000
+            mapnik::layer &l = m->m->get_layer(i);
+#else
+        mapnik::layer &l = m->m->getLayer(i);
+#endif
+            mapnik::parameters params = l.datasource()->params();
+
+            if (params.find("max_size") == params.end())
+            {
+                sprintf(tmp, "%i", num_threads + 2);
+                params["max_size"] = std::string(tmp);
+            }
+
+#if MAPNIK_VERSION >= 200200
+            l.set_datasource(mapnik::datasource_cache::instance().create(params));
+#else
+        l.set_datasource(mapnik::datasource_cache::instance()->create(params));
+#endif
+        }
+
+        free(tmp);
     }
 
     const char *mapnik_map_get_srs(mapnik_map_t *m)

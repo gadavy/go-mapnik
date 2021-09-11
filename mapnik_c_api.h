@@ -1,4 +1,5 @@
 #include "stdint.h"
+
 #ifndef MAPNIK_C_API_H
 #define MAPNIK_C_API_H
 
@@ -71,6 +72,8 @@ extern "C"
     MAPNIKCAPICALL mapnik_map_t *mapnik_map(unsigned int width, unsigned int height);
 
     MAPNIKCAPICALL void mapnik_map_free(mapnik_map_t *m);
+
+    MAPNIKCAPICALL void mapnik_map_set_max_connections(mapnik_map_t *m, int num_threads);
 
     MAPNIKCAPICALL const char *mapnik_map_last_error(mapnik_map_t *m);
 

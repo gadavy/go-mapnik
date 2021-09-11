@@ -146,6 +146,15 @@ func NewMap(width, height uint32) *Map {
 	return &Map{C.mapnik_map(C.uint(width), C.uint(height))}
 }
 
+func (m *Map) SetMaxConnections(count int) {
+	// magic number from https://github.com/openstreetmap/mod_tile/blob/master/src/gen_tile.cpp#L421
+	const minCount = 10
+
+	if count > minCount {
+		C.mapnik_map_set_max_connections(m.m, C.int(count))
+	}
+}
+
 func (m *Map) lastError() error {
 	return fmt.Errorf("%w: map error: %s", ErrMapnikError, C.GoString(C.mapnik_map_last_error(m.m)))
 }
